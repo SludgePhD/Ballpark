@@ -1,0 +1,9 @@
+[package]
+name = "no-std"
+edition.workspace = true
+
+[dependencies]
+ballpark = { path = "..", default-features = false }
+
+[features]
+alloc = ["ballpark/alloc"]
