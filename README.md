@@ -3,12 +3,29 @@
 This crate provides approximate equality comparisons for floating-point values
 and structures composed of floating-point values.
 
+```rust
+use ballpark::assert_approx_eq;
+
+// Infamously, 0.1 + 0.2 == 0.30000000000000004 when using double precision.
+assert_ne!(0.1 + 0.2, 0.3);
+
+// But they are *approximately* equal.
+assert_approx_eq!(0.1 + 0.2, 0.3);
+
+// In fact, the result is within one unit in the last place (ULP) of the correct one:
+assert_approx_eq!(0.1 + 0.2, 0.3).ulps(1);
+```
+
+Refer to the [API Documentation] for more examples like these.
+
+[API Documentation]: https://docs.rs/ballpark
+
 ## Features
 
 - Lightweight: no mandatory dependencies, fast compiles by default.
 - Stable: no unstable public dependencies (even optional ones).
   - The goal is to reach 1.0 Soon™ and stay there ideally forever.
-- Ergonomic: familiar syntax with IDE support.
+- Ergonomic: familiar syntax with good IDE support.
 - Flexible: `#![no_std]` support, no `alloc` needed (just disable the default features).
 
 ## Non-Features
@@ -29,58 +46,6 @@ This crate does ***not*** aim to provide the following features:
   - This avoids adding potentially dozens of optional unstable dependencies to this crate and pushing all the maintenance burden on me.
 
 [ꟻLIP]: https://github.com/gfx-rs/nv-flip-rs
-
-## Examples
-
-Perform assertions with the `assert_approx_eq!` macro:
-
-```rust
-use ballpark::assert_approx_eq;
-
-// Infamously, 0.1 + 0.2 == 0.30000000000000004 when using double precision.
-assert_ne!(0.1 + 0.2, 0.3);
-
-// But they are *approximately* equal.
-assert_approx_eq!(0.1 + 0.2, 0.3);
-
-// Like `assert_eq!`, you can provide your own panic message:
-let tolerance = 0.25;
-assert_approx_eq!(1.0, 1.1, "not within tolerance of {tolerance}").abs(tolerance);
-
-// The type of comparison, and threshold value, can be configured by calling methods on
-// the returned assertion guard.
-// 3 types of comparison are supported:
-
-// Absolute difference threshold: the difference between the values must be at most X
-assert_approx_eq!(0.9, 1.0).abs(0.1);
-
-// Relative difference threshold: the difference must be within a fraction of the bigger input.
-assert_approx_eq!(99.0, 100.0).rel(0.01);  // Difference must be within 1% of the bigger input.
-
-// Units in the last place: there must be at most N distinct float values between the numbers.
-assert_approx_eq!(1.0, 1.0 + f32::EPSILON).ulps(1); // 1 float apart
-
-// If none of these methods are called, a "default" comparison is performed: a `ulps` comparison
-// with a threshold of 4 ULPs.
-```
-
-Perform comparisons with `approx_eq`:
-
-```rust
-use ballpark::approx_eq;
-
-// The `approx_eq` function can be used to perform a comparison *without* an assertion:
-if !approx_eq(1.0, 1.0) {
-    eprintln!("something's wrong!");
-    std::process::abort();
-}
-let input = 1e-8;
-if *approx_eq(input, 0.0).abs(1e-7) {
-    return; // close enough
-}
-```
-
-For full API documentation, please refer to <https://docs.rs/ballpark>.
 
 ## Rust Support
 

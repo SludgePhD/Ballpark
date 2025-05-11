@@ -1,7 +1,8 @@
 //! Approximate equality.
 //!
 //! This crate provides mechanisms for comparing floating-point numbers and structures containing
-//! floating-point numbers for *approximate equality* in the presence of rounding errors.
+//! floating-point numbers for *approximate equality* in the presence of rounding and measurement
+//! errors.
 //!
 //! # Comparisons
 //!
@@ -54,12 +55,17 @@
 //!
 //! // These values are too far away for the default comparison to consider them equal:
 //! let a = 10.0;
-//! let b = 10.6;
+//! let b = 10.1;
 //!
 //! assert_approx_ne!(a, b);
 //!
-//! // But with a custom *absolute* comparison, they are treated equal:
-//! assert_approx_eq!(a, b).abs(1.0);
+//! // The values are less than 1.0 apart, so an *absolute difference* comparison with a tolerance
+//! // of 1.0 will treat them as equal:
+//! assert_approx_eq!(a, b).abs(0.25);
+//!
+//! // They are also within 1% of each other, so a relative comparison with a tolerance of 0.1
+//! // also treats them as equal:
+//! assert_approx_eq!(a, b).rel(0.01);
 //! ```
 //!
 //! # Custom Types
@@ -213,6 +219,23 @@ pub trait ApproxEq<Rhs: ?Sized = Self> {
     ///
     /// `NaN` is never considered equal to anything.
     ///
+    /// # [`u32`] for tolerances
+    ///
+    /// This type of comparison uses a fixed [`u32`] tolerance, even though an [`f64`] (or larger
+    /// type) can have more than 2³² ULPs between different values.
+    /// The rationale for using [`u32`] regardless of the underlying floating-point type is:
+    ///
+    /// * It keeps the [`ApproxEq`] trait and its implementations simpler, by not requiring another
+    ///   associated type.
+    /// * It makes usage from generic code easier, by not requiring such users to constrain this
+    ///   type.
+    /// * A difference of billions of ULPs is *much* better expressed with the other types of
+    ///   comparisons.
+    ///
+    /// The ULP-based comparison is intended for computations that accumulate small rounding errors
+    /// of a few ULPs, not for computations that are subject to catastrophic cancellation or that
+    /// contain significant amount of sensor noise or other interference and uncertainty.
+    ///
     /// [*units in the last place*]: https://en.wikipedia.org/wiki/Unit_in_the_last_place
     fn ulps_eq(&self, other: &Rhs, ulps_tolerance: u32) -> bool;
 }
@@ -338,6 +361,8 @@ where
     /// This type of comparison is typically a good choice when comparing values that are relatively
     /// close to zero but have a large amount of relative error (for example due to catastrophic
     /// cancellation).
+    /// It can also be used "ad-hoc", when a more rigid error model is deemed unnecessary and a
+    /// simple estimate of the error is sufficient (a *ballpark* estimate, if you will).
     ///
     /// # Examples
     ///
@@ -363,8 +388,10 @@ where
     /// If the absolute difference of the compared values is less than or equal to the largest of
     /// the two values times `rel`, the values are considered to be equal.
     ///
-    /// This type of comparison is a good choice for numbers that aren't very close to zero. For
-    /// numbers close to zero, a very large relative tolerance might be required and
+    /// This type of comparison is a good choice for numbers that aren't very close to zero, but
+    /// have a larger error than what a [`ulps`][Comparison::ulps] comparison can reasonably be used
+    /// for.
+    /// For numbers close to zero, a very large relative tolerance might be required and
     /// [`Comparison::abs`] might be a better choice.
     ///
     /// # Examples
