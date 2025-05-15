@@ -1,14 +1,17 @@
 [workspace]
 members = ["no-std"]
 package.edition = "2024"
+package.version = "0.1.0"
+package.license = "0BSD"
+package.repository = "https://github.com/SludgePhD/Ballpark"
 
 [package]
 name = "ballpark"
 description = "Approximate comparisons for floating-point numbers"
-version = "0.1.0"
+version.workspace = true
 edition.workspace = true
-license = "0BSD"
-repository = "https://github.com/SludgePhD/Ballpark"
+license.workspace = true
+repository.workspace = true
 categories = ["mathematics", "no-std::no-alloc", "algorithms"]
 keywords = ["ulp", "ulps", "approx", "equality"]
 
