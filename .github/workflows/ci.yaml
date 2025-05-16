@@ -6,15 +6,30 @@ on:
     - main
 
 env:
-  CARGO_NET_RETRY: 10
   RUSTUP_MAX_RETRIES: 10
-  CARGO_INCREMENTAL: 0
-  CI: 1
-  RUST_BACKTRACE: short
-  RUSTFLAGS: -D warnings
-  RUSTDOCFLAGS: -D warnings
+  MSRV: 1.85.0  # (keep this in sync with `Cargo.toml`'s `rust-version`)
 
 jobs:
+  msrv:
+    name: MSRV
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      run: |
+        rustup install ${{ env.MSRV }} --profile=minimal
+        rustup install nightly --profile=minimal
+
+    - name: Install CI/CD tooling
+      run: cargo install sludge-cicd --debug
+
+    - name: Run CI/CD
+      run: sludge-cicd
+      # (no token, this should only run tests)
+
   ci:
     name: CI
     strategy:
@@ -53,7 +68,7 @@ jobs:
 
   cd:
     name: Autopublish
-    needs: ci
+    needs: [msrv, ci]
     runs-on: ubuntu-latest
 
     permissions:
@@ -77,3 +92,4 @@ jobs:
       run: sludge-cicd
       env:
         CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
