@@ -196,7 +196,8 @@ pub trait ApproxEq<Rhs: ?Sized = Self> {
     ///
     /// # Panics
     ///
-    /// This method may panic if `abs_tolerance` is negative or NaN.
+    /// It is an error to call this method with a negative or NaN `abs_tolerance`. Implementations
+    /// are allowed to panic when that happens.
     fn abs_eq(&self, other: &Rhs, abs_tolerance: Self::Tolerance) -> bool;
 
     /// Performs a *relative comparison* of `self` and `other`.
@@ -206,7 +207,8 @@ pub trait ApproxEq<Rhs: ?Sized = Self> {
     ///
     /// # Panics
     ///
-    /// This method may panic if `abs_tolerance` is negative or NaN.
+    /// It is an error to call this method with a negative or NaN `rel_tolerance`. Implementations
+    /// are allowed to panic when that happens.
     fn rel_eq(&self, other: &Rhs, rel_tolerance: Self::Tolerance) -> bool;
 
     /// Performs a comparison of `self` and `other` by counting the number of
@@ -233,10 +235,11 @@ pub trait ApproxEq<Rhs: ?Sized = Self> {
     ///   comparisons.
     ///
     /// The ULP-based comparison is intended for computations that accumulate small rounding errors
-    /// of a few ULPs, not for computations that are subject to catastrophic cancellation or that
+    /// of a few ULPs, not for computations that are subject to [catastrophic cancellation] or that
     /// contain significant amount of sensor noise or other interference and uncertainty.
     ///
     /// [*units in the last place*]: https://en.wikipedia.org/wiki/Unit_in_the_last_place
+    /// [catastrophic cancellation]: https://en.wikipedia.org/wiki/Catastrophic_cancellation
     fn ulps_eq(&self, other: &Rhs, ulps_tolerance: u32) -> bool;
 }
 
@@ -359,24 +362,25 @@ where
     /// are considered to be equal.
     ///
     /// This type of comparison is typically a good choice when comparing values that are relatively
-    /// close to zero but have a large amount of relative error (for example due to catastrophic
-    /// cancellation).
+    /// close to zero but have a large amount of relative error (for example due to
+    /// [catastrophic cancellation]).
+    ///
     /// It can also be used "ad-hoc", when a more rigid error model is deemed unnecessary and a
     /// simple estimate of the error is sufficient (a *ballpark* estimate, if you will).
+    ///
+    /// [catastrophic cancellation]: https://en.wikipedia.org/wiki/Catastrophic_cancellation
     ///
     /// # Examples
     ///
     /// ```
-    /// use ballpark::{assert_approx_eq, assert_approx_ne};
+    /// use ballpark::approx_eq;
     ///
-    /// // The absolute difference between -0.25 and 0.5 is 0.75, so a tolerance of 0.75 or higher
-    /// // will make them compare "approximately equal"...
-    /// assert_approx_eq!(-0.25, 0.5).abs(0.75);
-    /// assert_approx_eq!(0.5, -0.25).abs(0.75);
-    /// assert_approx_eq!(-0.25, 0.5).abs(1.0);
-    ///
-    /// // ...but tolerances below 0.75 won't
-    /// assert_approx_ne!(0.5, -0.25).abs(0.74);
+    /// if !approx_eq(1.0, 1.25).abs(0.5) {
+    ///     panic!("should be equal: values are only 0.25 apart, tolerance is 0.5");
+    /// }
+    /// if *approx_eq(1.0, 1.25).abs(0.1) {
+    ///     panic!("should not be equal: values are 0.25 apart, tolerance is 0.1");
+    /// }
     /// ```
     pub fn abs(mut self, abs: T::Tolerance) -> Self {
         self.abs = Some(abs);
@@ -397,15 +401,13 @@ where
     /// # Examples
     ///
     /// ```
-    /// use ballpark::{assert_approx_eq, assert_approx_ne};
+    /// use ballpark::approx_eq;
     ///
     /// // 1% of 100.0 is 1.0, so this comparison is identical to an absolute comparison with a
     /// // tolerance value of 1.0.
-    /// assert_approx_eq!(99.0, 100.0).rel(0.01);
-    /// assert_approx_eq!(99.0, 100.0).abs(1.0);
-    ///
-    /// assert_approx_ne!(99.0, 100.0).rel(0.0099);
-    /// assert_approx_ne!(99.0, 100.0).abs(0.99);
+    /// if !approx_eq(99.0, 100.0).rel(0.01) {
+    ///     panic!("should be considered equal");
+    /// }
     /// ```
     pub fn rel(mut self, rel: T::Tolerance) -> Self {
         self.rel = Some(rel);
@@ -434,19 +436,12 @@ where
     /// # Examples
     ///
     /// ```
-    /// use ballpark::{assert_approx_eq, assert_approx_ne};
+    /// use ballpark::approx_eq;
     ///
     /// // `1.0` and `1.0 + epsilon` are always precisely one ULP apart.
-    /// assert_approx_eq!(1.0, 1.0 + f64::EPSILON).ulps(1);
-    ///
-    /// // Infamously, 0.1 + 0.2 == 0.30000000000000004 when computed with doubles, off by one ULP
-    /// // from the double closest to 0.3.
-    /// assert_ne!(0.1 + 0.2, 0.3);
-    /// assert_eq!(0.1 + 0.2, 0.30000000000000004);
-    /// assert_approx_eq!(0.1 + 0.2, 0.3).ulps(1);
-    ///
-    /// // `inf` comes right after `f32::MAX`.
-    /// assert_approx_eq!(f32::MAX, f32::INFINITY).ulps(1);
+    /// if !approx_eq(1.0, 1.0 + f64::EPSILON).ulps(1) {
+    ///     panic!("should be considered equal");
+    /// }
     /// ```
     pub fn ulps(mut self, ulps: u32) -> Self {
         self.ulps = Some(ulps);
@@ -517,7 +512,22 @@ where
 {
     /// Perform an *absolute comparison* of the values with the given tolerance.
     ///
-    /// Also see [`Comparison::abs`].
+    /// See [`Comparison::abs`] for information on when to pick this type of comparison.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ballpark::{assert_approx_eq, assert_approx_ne};
+    ///
+    /// // The absolute difference between -0.25 and 0.5 is 0.75, so a tolerance of 0.75 or higher
+    /// // will make them compare "approximately equal"...
+    /// assert_approx_eq!(-0.25, 0.5).abs(0.75);
+    /// assert_approx_eq!(0.5, -0.25).abs(0.75);
+    /// assert_approx_eq!(-0.25, 0.5).abs(1.0);
+    ///
+    /// // ...but tolerances below 0.75 won't
+    /// assert_approx_ne!(0.5, -0.25).abs(0.74);
+    /// ```
     pub fn abs(mut self, abs: T::Tolerance) -> Self {
         self.comp = self.comp.abs(abs);
         self
@@ -525,7 +535,21 @@ where
 
     /// Perform a *relative comparison* of the values with the given tolerance.
     ///
-    /// Also see [`Comparison::rel`].
+    /// See [`Comparison::rel`] for information on when to pick this type of comparison.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ballpark::{assert_approx_eq, assert_approx_ne};
+    ///
+    /// // 1% of 100.0 is 1.0, so this comparison is identical to an absolute comparison with a
+    /// // tolerance value of 1.0.
+    /// assert_approx_eq!(99.0, 100.0).rel(0.01);
+    /// assert_approx_eq!(99.0, 100.0).abs(1.0);
+    ///
+    /// assert_approx_ne!(99.0, 100.0).rel(0.0099);
+    /// assert_approx_ne!(99.0, 100.0).abs(0.99);
+    /// ```
     pub fn rel(mut self, rel: T::Tolerance) -> Self {
         self.comp = self.comp.rel(rel);
         self
@@ -534,7 +558,25 @@ where
     /// Perform a comparison by counting the number of *units in the last place* (ULPs) between the
     /// values.
     ///
-    /// Also see [`Comparison::ulps`].
+    /// See [`Comparison::ulps`] for information on when to pick this type of comparison.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ballpark::{assert_approx_eq, assert_approx_ne};
+    ///
+    /// // `1.0` and `1.0 + epsilon` are always precisely one ULP apart.
+    /// assert_approx_eq!(1.0, 1.0 + f64::EPSILON).ulps(1);
+    ///
+    /// // Infamously, 0.1 + 0.2 == 0.30000000000000004 when computed with doubles, off by one ULP
+    /// // from the double closest to 0.3.
+    /// assert_ne!(0.1 + 0.2, 0.3);
+    /// assert_eq!(0.1 + 0.2, 0.30000000000000004);
+    /// assert_approx_eq!(0.1 + 0.2, 0.3).ulps(1);
+    ///
+    /// // `inf` comes right after `f32::MAX`.
+    /// assert_approx_eq!(f32::MAX, f32::INFINITY).ulps(1);
+    /// ```
     pub fn ulps(mut self, ulps: u32) -> Self {
         self.comp = self.comp.ulps(ulps);
         self
