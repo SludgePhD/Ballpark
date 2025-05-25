@@ -1,7 +1,7 @@
 [workspace]
 members = ["no-std"]
 package.edition = "2024"
-package.version = "0.1.0"
+package.version = "0.1.1"
 package.license = "0BSD"
 package.repository = "https://github.com/SludgePhD/Ballpark"
 package.rust-version = "1.85.0" # (keep this in sync with `ci.yaml`)
