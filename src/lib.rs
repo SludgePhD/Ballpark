@@ -493,6 +493,27 @@ where
 ///
 /// If more than one of these methods is called, the values will be considered equal if *any*
 /// comparison considers them equal (ie. the results are ORed together).
+///
+/// # Panics in [`Drop`] and `#![no_std]`
+///
+/// If a thread is panicking, and another panic happens in a [`Drop`] implementation, the process
+/// will be terminated.
+///
+/// To prevent this, the [`Drop`] implementation of [`Assertion`] will check
+/// [`thread::panicking`][::std::thread::panicking] to see if the thread is currently unwinding,
+/// but **only if the `std` feature is enabled**, since Rust offers no way to detect whether this
+/// symbol is available otherwise.
+///
+/// Note that this is not really a problem when this library is used properly:
+/// When there is a simple sequence of [`assert_approx_eq!`] family macro invocations, there will
+/// only ever be a single [`Assertion`] object that gets constructed, checked, and discarded before
+/// the next one is created.
+///
+/// Therefore, it is best to follow a few simple rules: Don't store [`Assertion`]s in local
+/// variables, don't pass them as arguments, and don't put them in compound types like `struct`s or
+/// tuples.
+///
+/// These consideration do not apply to [`Comparison`], since that does not have a destructor.
 pub struct Assertion<'a, T, U = T>
 where
     T: ApproxEq<U> + fmt::Debug,
