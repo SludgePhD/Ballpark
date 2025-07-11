@@ -6,7 +6,7 @@
 //!
 //! # Comparisons
 //!
-//! The [`approx_eq`] function can be used to compare to values for *approximate equality*.
+//! The [`approx_eq`] function can be used to compare two values for *approximate equality*.
 //!
 //! [`approx_eq`] returns a [`Comparison`], which has to be dereferenced to obtain the comparison
 //! result as a [`bool`]. It can also be inverted to get the inverted result.
@@ -59,11 +59,11 @@
 //!
 //! assert_approx_ne!(a, b);
 //!
-//! // The values are less than 1.0 apart, so an *absolute difference* comparison with a tolerance
-//! // of 1.0 will treat them as equal:
+//! // The values are less than 0.25 apart, so an *absolute difference* comparison with a tolerance
+//! // of 0.25 will treat them as equal:
 //! assert_approx_eq!(a, b).abs(0.25);
 //!
-//! // They are also within 1% of each other, so a relative comparison with a tolerance of 0.1
+//! // They are also within 1% of each other, so a relative comparison with a tolerance of 0.01
 //! // also treats them as equal:
 //! assert_approx_eq!(a, b).rel(0.01);
 //! ```
