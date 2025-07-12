@@ -4,7 +4,13 @@ extern crate alloc;
 
 use core::iter::zip;
 
-use alloc::{boxed::Box, collections::VecDeque, rc::Rc, sync::Arc, vec::Vec};
+use alloc::{
+    boxed::Box,
+    collections::{LinkedList, VecDeque},
+    rc::Rc,
+    sync::Arc,
+    vec::Vec,
+};
 
 use super::ApproxEq;
 
@@ -96,6 +102,22 @@ impl<T: ApproxEq> ApproxEq for VecDeque<T> {
             return false;
         }
 
+        zip(self.iter(), other.iter()).all(|(a, b)| a.ulps_eq(b, ulps_tolerance))
+    }
+}
+
+impl<T: ApproxEq> ApproxEq for LinkedList<T> {
+    type Tolerance = T::Tolerance;
+
+    fn abs_eq(&self, other: &Self, abs_tolerance: Self::Tolerance) -> bool {
+        zip(self.iter(), other.iter()).all(|(a, b)| a.abs_eq(b, abs_tolerance))
+    }
+
+    fn rel_eq(&self, other: &Self, rel_tolerance: Self::Tolerance) -> bool {
+        zip(self.iter(), other.iter()).all(|(a, b)| a.rel_eq(b, rel_tolerance))
+    }
+
+    fn ulps_eq(&self, other: &Self, ulps_tolerance: u32) -> bool {
         zip(self.iter(), other.iter()).all(|(a, b)| a.ulps_eq(b, ulps_tolerance))
     }
 }
