@@ -170,6 +170,14 @@ fn inf() {
 }
 
 #[test]
+fn temporary() {
+    // Test for the behavior in https://github.com/brendanzab/approx/issues/71
+    let x = &[0.0];
+    assert_eq!(vec![0.0].as_slice(), x);
+    assert_approx_eq!(vec![0.0].as_slice(), x);
+}
+
+#[test]
 fn option() {
     assert_approx_eq!(None::<f32>, None::<f32>).abs(0.0);
     assert_approx_eq!(None::<f32>, None::<f32>).rel(0.0);
