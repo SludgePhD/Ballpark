@@ -7,7 +7,7 @@
 - Prevent `Assertion` objects from being assigned to `let` bindings without obstacles.
   - Only one `Assertion` is meant to exist at a time in any given scope.
 
-### Enhancements
+### Improvements
 
 - `ApproxEq` is now implemented for `LinkedList`.
 - Documentation has been improved a bit.
