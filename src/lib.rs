@@ -124,6 +124,25 @@
 #[doc = include_str!("../README.md")]
 mod readme {}
 
+/// ```
+/// use ballpark::*;
+/// assert_approx_eq!(1.0, 1.0);
+/// ```
+///
+/// Assertions borrow a temporary to prevent storage in locals.
+///
+/// ```compile_fail
+/// use ballpark::*;
+/// let assertion = assert_approx_eq!(1.0, 1.0);
+/// ```
+///
+/// This is just a minor obstable – they can still be passed as arguments – but makes it harder to
+/// get into a situation of potentially panicking in `Drop` when another `Assertion` is already
+/// unwinding.
+/// If the `std` feature is disabled, `thread::panicking` is unavailable, so we cannot prevent the
+/// double-panic.
+mod compile_fail {}
+
 mod impls;
 
 #[cfg(any(test, feature = "alloc"))]
@@ -157,6 +176,7 @@ pub mod __internal {
         assert_eq: bool,
         defused: bool,
         msg: Option<fmt::Arguments<'a>>,
+        _temporary: &'a mut i32,
     ) -> Assertion<'a, T, U>
     where
         T: ApproxEq<U> + fmt::Debug,
@@ -747,6 +767,7 @@ macro_rules! assert_approx_eq {
             true,  /* eq */
             false, /* defused */
             $crate::__internal::core::option::Option::None,
+            &mut 0,
         )
     };
     ($lhs:expr, $rhs:expr, $($arg:tt)+) => {
@@ -755,7 +776,8 @@ macro_rules! assert_approx_eq {
             &$rhs,
             true,  /* eq */
             false, /* defused */
-            $crate::__internal::core::option::Option::Some($crate::__internal::core::format_args!($($arg)+))
+            $crate::__internal::core::option::Option::Some($crate::__internal::core::format_args!($($arg)+)),
+            &mut 0,
         )
     };
 }
@@ -792,7 +814,8 @@ macro_rules! assert_approx_ne {
             &$rhs,
             false, /* eq */
             false, /* defused */
-            $crate::__internal::core::option::Option::None
+            $crate::__internal::core::option::Option::None,
+            &mut 0,
         )
     };
     ($lhs:expr, $rhs:expr, $($arg:tt)+) => {
@@ -801,7 +824,8 @@ macro_rules! assert_approx_ne {
             &$rhs,
             false, /* eq */
             false, /* defused */
-            $crate::__internal::core::option::Option::Some($crate::__internal::core::format_args!($($arg)+))
+            $crate::__internal::core::option::Option::Some($crate::__internal::core::format_args!($($arg)+)),
+            &mut 0,
         )
     };
 }
@@ -819,6 +843,7 @@ macro_rules! debug_assert_approx_eq {
             true,  /* eq */
             !cfg!(debug_assertions), /* defused */
             $crate::__internal::core::option::Option::None,
+            &mut 0,
         )
     };
     ($lhs:expr, $rhs:expr, $($arg:tt)+) => {
@@ -827,7 +852,8 @@ macro_rules! debug_assert_approx_eq {
             &$rhs,
             true,  /* eq */
             !cfg!(debug_assertions), /* defused */
-            $crate::__internal::core::option::Option::Some($crate::__internal::core::format_args!($($arg)+))
+            $crate::__internal::core::option::Option::Some($crate::__internal::core::format_args!($($arg)+)),
+            &mut 0,
         )
     };
 }
@@ -844,7 +870,8 @@ macro_rules! debug_assert_approx_ne {
             &$rhs,
             false, /* eq */
             !cfg!(debug_assertions), /* defused */
-            $crate::__internal::core::option::Option::None
+            $crate::__internal::core::option::Option::None,
+            &mut 0,
         )
     };
     ($lhs:expr, $rhs:expr, $($arg:tt)+) => {
@@ -853,7 +880,8 @@ macro_rules! debug_assert_approx_ne {
             &$rhs,
             false, /* eq */
             !cfg!(debug_assertions), /* defused */
-            $crate::__internal::core::option::Option::Some($crate::__internal::core::format_args!($($arg)+))
+            $crate::__internal::core::option::Option::Some($crate::__internal::core::format_args!($($arg)+)),
+            &mut 0,
         )
     };
 }
