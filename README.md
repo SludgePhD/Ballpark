@@ -1,7 +1,7 @@
 # *Ballpark* – Approximate Comparisons
 
-This crate provides approximate equality comparisons for floating-point values
-and structures composed of floating-point values.
+This crate provides approximate equality comparisons and assertions for
+floating-point values.
 
 ```rust
 use ballpark::assert_approx_eq;
@@ -23,8 +23,7 @@ Refer to the [API Documentation] for more examples like these.
 ## Features
 
 - Lightweight: no mandatory dependencies, fast compiles by default.
-- Stable: no unstable public dependencies (even optional ones).
-  - The goal is to reach 1.0 Soon™ and stay there ideally forever.
+- Stable: 1.0, no breaking changes planned, no unstable public dependencies.
 - Ergonomic: familiar syntax with good IDE support.
 - Flexible: `#![no_std]` support, no `alloc` needed (just disable the default features).
 
