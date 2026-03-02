@@ -178,19 +178,6 @@ fn temporary() {
 }
 
 #[test]
-fn option() {
-    assert_approx_eq!(None::<f32>, None::<f32>).abs(0.0);
-    assert_approx_eq!(None::<f32>, None::<f32>).rel(0.0);
-    assert_approx_eq!(None::<f32>, None::<f32>).ulps(0);
-    assert_approx_eq!(Some(0.0), Some(0.0)).abs(0.0);
-    assert_approx_eq!(Some(0.0), Some(0.0)).rel(0.0);
-    assert_approx_eq!(Some(0.0), Some(0.0)).ulps(0);
-
-    assert_approx_ne!(None::<f32>, Some(0.0)).rel(0.0);
-    assert_approx_ne!(Some(0.0), None::<f32>).rel(0.0);
-}
-
-#[test]
 fn tuples() {
     assert_approx_eq!((0.0,), (0.0,)).rel(0.0);
     assert_approx_eq!((0.0, 1.0), (0.0, 1.0)).rel(0.0);

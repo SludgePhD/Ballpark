@@ -160,6 +160,10 @@ impl<T: ApproxEq<U>, U> ApproxEq<[U]> for [T] {
     type Tolerance = T::Tolerance;
 
     fn abs_eq(&self, other: &[U], abs_tolerance: Self::Tolerance) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
         for (a, b) in self.iter().zip(other) {
             if !T::abs_eq(a, b, abs_tolerance) {
                 return false;
@@ -169,6 +173,10 @@ impl<T: ApproxEq<U>, U> ApproxEq<[U]> for [T] {
     }
 
     fn rel_eq(&self, other: &[U], rel_tolerance: Self::Tolerance) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
         for (a, b) in self.iter().zip(other) {
             if !T::rel_eq(a, b, rel_tolerance) {
                 return false;
@@ -178,6 +186,10 @@ impl<T: ApproxEq<U>, U> ApproxEq<[U]> for [T] {
     }
 
     fn ulps_eq(&self, other: &[U], ulps_tolerance: u32) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
         for (a, b) in self.iter().zip(other) {
             if !T::ulps_eq(a, b, ulps_tolerance) {
                 return false;
@@ -416,5 +428,30 @@ impl<T: ApproxEq> ApproxEq for OnceCell<T> {
 
     fn ulps_eq(&self, other: &Self, ulps_tolerance: u32) -> bool {
         self.get().ulps_eq(&other.get(), ulps_tolerance)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{assert_approx_eq, assert_approx_ne};
+
+    #[test]
+    fn option() {
+        assert_approx_eq!(None::<f32>, None::<f32>).abs(0.0);
+        assert_approx_eq!(None::<f32>, None::<f32>).rel(0.0);
+        assert_approx_eq!(None::<f32>, None::<f32>).ulps(0);
+        assert_approx_eq!(Some(0.0), Some(0.0)).abs(0.0);
+        assert_approx_eq!(Some(0.0), Some(0.0)).rel(0.0);
+        assert_approx_eq!(Some(0.0), Some(0.0)).ulps(0);
+
+        assert_approx_ne!(None::<f32>, Some(0.0)).rel(0.0);
+        assert_approx_ne!(Some(0.0), None::<f32>).rel(0.0);
+    }
+
+    #[test]
+    fn slice() {
+        assert_approx_eq!(&[0.0][..], &[0.0][..]);
+        assert_approx_ne!(&[0.0][..], &[0.0, 0.0][..]);
+        assert_approx_ne!(&[0.0, 0.0][..], &[0.0][..]);
     }
 }

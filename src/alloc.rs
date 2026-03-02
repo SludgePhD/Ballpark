@@ -110,14 +110,67 @@ impl<T: ApproxEq> ApproxEq for LinkedList<T> {
     type Tolerance = T::Tolerance;
 
     fn abs_eq(&self, other: &Self, abs_tolerance: Self::Tolerance) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
         zip(self.iter(), other.iter()).all(|(a, b)| a.abs_eq(b, abs_tolerance))
     }
 
     fn rel_eq(&self, other: &Self, rel_tolerance: Self::Tolerance) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
         zip(self.iter(), other.iter()).all(|(a, b)| a.rel_eq(b, rel_tolerance))
     }
 
     fn ulps_eq(&self, other: &Self, ulps_tolerance: u32) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
         zip(self.iter(), other.iter()).all(|(a, b)| a.ulps_eq(b, ulps_tolerance))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::{LinkedList, VecDeque};
+
+    use crate::{assert_approx_eq, assert_approx_ne};
+
+    #[test]
+    fn vec() {
+        assert_approx_eq!(vec![1.0, 2.0], vec![1.0 + f64::EPSILON, 2.0]).ulps(1);
+        assert_approx_ne!(vec![1.0, 2.0], vec![1.0 + 1e-6, 2.0]).ulps(1);
+        assert_approx_ne!(vec![1.0, 2.0], vec![1.0]);
+    }
+
+    #[test]
+    fn vecdeque() {
+        let mut a = VecDeque::from_iter([0.0, 1.0]);
+        a.rotate_left(1);
+
+        let mut b = VecDeque::from_iter([0.0, 1.0]);
+        b.rotate_right(1);
+
+        assert_approx_eq!(a, b);
+
+        assert_approx_ne!(a, VecDeque::from_iter([0.0]));
+        assert_approx_ne!(a, VecDeque::from_iter([1.0]));
+    }
+
+    #[test]
+    fn linked_list() {
+        assert_approx_eq!(
+            LinkedList::from_iter([0.0, 1.0]),
+            LinkedList::from_iter([0.0, 1.0 + f64::EPSILON])
+        );
+
+        assert_approx_ne!(
+            LinkedList::from_iter([1.0, 0.0]),
+            LinkedList::from_iter([1.0 + f64::EPSILON])
+        );
     }
 }
