@@ -22,10 +22,10 @@ Refer to the [API Documentation] for more examples like these.
 
 ## Features
 
-- Lightweight: no mandatory dependencies, fast compiles by default.
-- Stable: 1.0, no breaking changes planned, no unstable public dependencies.
-- Ergonomic: familiar syntax with good IDE support.
-- Flexible: `#![no_std]` support, no `alloc` needed (just disable the default features).
+- **Lightweight**: no mandatory dependencies, fast compiles by default.
+- **Stable**: 1.0, no breaking changes planned, no unstable public dependencies.
+- **Ergonomic**: familiar syntax with good IDE support.
+- **Flexible**: `#![no_std]` support, no `alloc` needed (just disable the default features).
 
 ## Non-Features
 
