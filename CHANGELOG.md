@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.1
+
+### Fixes
+
+- Fix comparison between slices and containers of different lengths.
+
 ## v1.0.0
 
 ### Breaking Changes
